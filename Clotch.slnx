@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Clotch.App/Clotch.App.csproj" />
+    <Project Path="src/Clotch.Core/Clotch.Core.csproj" />
+    <Project Path="src/Clotch.Diag/Clotch.Diag.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Clotch.Tests/Clotch.Tests.csproj" />
+  </Folder>
+</Solution>
