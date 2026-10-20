@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>Clotch</AssemblyName>
+    <RootNamespace>Clotch.App</RootNamespace>
+    <ApplicationIcon>Assets\clotch.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- WPF reads per-monitor DPI awareness from the manifest; the WinForms analyzer assumes a WinForms app. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\clotch.ico" LogicalName="Clotch.App.clotch.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Clotch.Core\Clotch.Core.csproj" />
+  </ItemGroup>
+</Project>
