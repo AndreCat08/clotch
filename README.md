@@ -1,92 +1,92 @@
 # Clotch
 
-Clotch adalah aplikasi system tray Windows untuk memantau usage **Claude Code / Claude subscription**.
-Usage ditampilkan sebagai *notch* kecil di bagian atas layar.
+Clotch is a Windows system tray app for monitoring **Claude Code / Claude subscription** usage.
+Usage is shown as a small *notch* at the top of the screen.
 
-- Muncul di system tray saat dijalankan.
-- Mendeteksi **Claude Code** (npm / native) dan **Claude Desktop** (MSIX atau Squirrel lama), lalu mengecek apakah ada subscription aktif (Pro / Max / Team / Enterprise).
-- Kalau ada, notch muncul di tengah atas layar dan menampilkan % limit sesi 5 jam dan % limit mingguan.
-- Notch bisa **di-drag**, dan posisinya disimpan. **Klik** untuk melihat detail. Notch bisa **disembunyikan** lewat tombol ✕ atau menu tray.
+- Appears in the system tray when launched.
+- Detects **Claude Code** (npm / native) and **Claude Desktop** (MSIX or legacy Squirrel), then checks for an active subscription (Pro / Max / Team / Enterprise).
+- If one is found, the notch appears at the top center of the screen and shows the % of the 5-hour session limit and the % of the weekly limit.
+- The notch can be **dragged**, and its position is saved. **Click** it to see details. The notch can be **hidden** with the ✕ button or from the tray menu.
 
-## Menjalankan
+## Running
 
 ```sh
-# dari source (butuh .NET 10 SDK)
+# from source (requires the .NET 10 SDK)
 dotnet run --project src/Clotch.App -c Release
 
-# build exe single-file self-contained (tidak perlu .NET di mesin target, ~170 MB)
+# build a self-contained single-file exe (no .NET needed on the target machine, ~170 MB)
 dotnet publish src/Clotch.App -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/publish
 
-# alternatif kecil (~350 KB), butuh .NET 10 Desktop Runtime terpasang
+# small alternative (~350 KB), requires the .NET 10 Desktop Runtime to be installed
 dotnet publish src/Clotch.App -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o artifacts/publish-fd
 ```
 
-`EnableCompressionInSingleFile` sengaja tidak dipakai. Opsi itu memperkecil exe menjadi ~75 MB, tetapi pemakaian RAM naik dari ~49 MB menjadi ~170 MB.
+`EnableCompressionInSingleFile` is intentionally not used. It shrinks the exe to ~75 MB, but RAM usage rises from ~49 MB to ~170 MB.
 
-Hanya satu instance yang berjalan. Kalau `Clotch.exe` dijalankan lagi, instance yang sudah berjalan akan menampilkan notch-nya.
+Only one instance runs at a time. If `Clotch.exe` is launched again, the running instance shows its notch.
 
-## Cara pakai
+## Usage
 
-| Aksi | Hasil |
+| Action | Result |
 |---|---|
-| Klik baris notch | Expand / collapse detail |
-| Drag notch | Pindah posisi. Posisi di-clamp ke layar dan disimpan |
-| ✕ di notch / "Sembunyikan" | Notch disembunyikan. Status ini disimpan |
-| Klik kiri icon tray | Tampilkan / sembunyikan notch. Kalau notch tidak tersedia, muncul penjelasannya |
-| Klik kanan icon tray | Menu: refresh, buka halaman usage claude.ai, kembalikan posisi, interval refresh (2–30 menit), sembunyikan saat fullscreen, jalankan saat Windows start, folder log, keluar |
+| Click the notch row | Expand / collapse details |
+| Drag the notch | Move it. The position is clamped to the screen and saved |
+| ✕ on the notch / "Sembunyikan" (Hide) | Hides the notch. This state is saved |
+| Left-click the tray icon | Show / hide the notch. If the notch is unavailable, an explanation is shown |
+| Right-click the tray icon | Menu: refresh, open the claude.ai usage page, reset position, refresh interval (2–30 minutes), hide while fullscreen, run at Windows startup, log folder, exit |
 
-Isi panel detail:
+The details panel contains:
 
-- Plan dan status data (Live / cache).
-- Semua limit yang dikirim server, lengkap dengan waktu reset dan countdown.
-- Pembagian pemakaian mingguan per produk (Claude Code / Chats / Cowork / Other).
-- Status extra usage.
-- **Token lokal**: token Claude Code di mesin ini per model, untuk hari ini dan window 5 jam aktif. Datanya dibaca dari `~/.claude/projects/**/*.jsonl`.
+- Plan and data status (Live / cache).
+- Every limit the server reports, with reset time and countdown.
+- Weekly usage breakdown per product (Claude Code / Chats / Cowork / Other).
+- Extra usage status.
+- **Local tokens**: Claude Code tokens on this machine per model, for today and the active 5-hour window. Read from `~/.claude/projects/**/*.jsonl`.
 
-Notch tidak muncul pada kondisi berikut. Penyebabnya ditampilkan di tooltip / balloon tray:
+The notch does not appear in the following cases. The reason is shown in the tray tooltip / balloon:
 
-| Kondisi | Pesan |
+| Condition | Message |
 |---|---|
-| Claude Code dan Claude Desktop tidak terinstall | tidak terdeteksi |
-| Hanya Claude Desktop, belum login Claude Code | login Claude Code diperlukan |
-| Claude Code terinstall, belum login | jalankan `claude` lalu `/login` |
-| Plan free / tidak diketahui | tidak ada subscription aktif |
-| Token ditolak server dan belum ada data cache | login ulang |
+| Neither Claude Code nor Claude Desktop is installed | not detected |
+| Only Claude Desktop, not logged in to Claude Code | Claude Code login required |
+| Claude Code installed, not logged in | run `claude`, then `/login` |
+| Free / unknown plan | no active subscription |
+| Token rejected by the server and no cached data yet | log in again |
 
-## Sumber data & privasi
+## Data sources & privacy
 
-- **Kredensial**: `%USERPROFILE%\.claude\.credentials.json`, atau `CLAUDE_CONFIG_DIR` kalau di-set. File ini **hanya dibaca**. Clotch tidak pernah menulisnya dan tidak pernah me-refresh token. Refresh token tetap urusan Claude Code, jadi Clotch tidak bisa membuat sesi Claude Code logout. Kalau token sudah kedaluwarsa, Clotch berhenti memanggil API sampai Claude Code me-refresh tokennya.
-- **Usage**: `GET https://api.anthropic.com/api/oauth/usage`, endpoint yang dipakai perintah `/usage` di Claude Code. Endpoint ini **tidak resmi** dan bisa berubah. Karena itu parser dibuat toleran: field yang hilang atau tidak dikenal tidak membuat app crash, dan key baru ikut ditampilkan dengan namanya apa adanya.
-- **Rate limit**: Clotch memanggil endpoint 1× per 5 menit secara default (minimal 2 menit). Kalau gagal, jeda dinaikkan bertahap 10 → 20 → 30 menit (maksimum). `Retry-After` dari server dihormati. Refresh manual dibatasi 1× per menit. Data terakhir yang berhasil tetap ditampilkan dan ditandai "cache".
-- **Network**: Clotch hanya menghubungi `api.anthropic.com`.
-- **Log**: `%LOCALAPPDATA%\Clotch\logs`. Semua baris log melewati redaksi token, jadi tidak ada `sk-ant-…` maupun header `Authorization` yang tercatat.
+- **Credentials**: `%USERPROFILE%\.claude\.credentials.json`, or `CLAUDE_CONFIG_DIR` if set. Clotch **only reads** this file. It never writes it and never refreshes the token. Token refresh stays Claude Code's job, so Clotch cannot log your Claude Code session out. If the token has expired, Clotch stops calling the API until Claude Code refreshes it.
+- **Usage**: `GET https://api.anthropic.com/api/oauth/usage`, the endpoint used by the `/usage` command in Claude Code. This endpoint is **unofficial** and may change. The parser is therefore lenient: missing or unknown fields do not crash the app, and new keys are displayed under their raw names.
+- **Rate limit**: by default Clotch calls the endpoint once every 5 minutes (minimum 2 minutes). On failure, the interval backs off 10 → 20 → 30 minutes (maximum). The server's `Retry-After` is honored. Manual refresh is limited to once per minute. The last successful data stays on screen, marked "cache".
+- **Network**: Clotch only contacts `api.anthropic.com`.
+- **Logs**: `%LOCALAPPDATA%\Clotch\logs`. Every log line goes through token redaction, so no `sk-ant-…` or `Authorization` header is ever recorded.
 - **Settings**: `%APPDATA%\Clotch\settings.json`.
 - **Autostart**: `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, value `Clotch`.
 
-## Struktur
+## Structure
 
 ```
-src/Clotch.Core   deteksi, kredensial, client + parser usage, monitor/backoff, scanner JSONL, gating, settings
+src/Clotch.Core   detection, credentials, usage client + parser, monitor/backoff, JSONL scanner, gating, settings
 src/Clotch.App    WPF: tray (WinForms NotifyIcon), NotchWindow, view model
-src/Clotch.Diag   clotch-diag: dump JSON apa yang dilihat Clotch (token disensor)
+src/Clotch.Diag   clotch-diag: JSON dump of what Clotch sees (tokens redacted)
 tests/Clotch.Tests  xUnit
-tools/make_icon.py  generator icon (stdlib Python)
+tools/make_icon.py  icon generator (Python stdlib)
 ```
 
-## Verifikasi
+## Verification
 
 ```sh
 dotnet build Clotch.slnx -c Release
 dotnet test Clotch.slnx -c Release
-dotnet run --project src/Clotch.Diag -c Release            # exit 0 = notch akan tampil, 2 = tidak
+dotnet run --project src/Clotch.Diag -c Release            # exit 0 = notch will show, 2 = it won't
 dotnet run --project src/Clotch.Diag -c Release -- --no-network
 reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v Clotch
-grep -rE "sk-ant-|Bearer " "$LOCALAPPDATA/Clotch/logs"      # harus kosong
+grep -rE "sk-ant-|Bearer " "$LOCALAPPDATA/Clotch/logs"      # must be empty
 ```
 
-## Batasan yang diketahui
+## Known limitations
 
-- Endpoint usage tidak terdokumentasi. Kalau Anthropic mengubahnya, panel limit akan kosong, tetapi token lokal tetap tampil.
-- Beberapa key di respons server berupa nama kode (mis. `iguana_necktie`). Key seperti ini ditampilkan apa adanya, tanpa ditebak artinya.
-- Unit `monthly_limit` / `used_credits` pada extra usage tidak terdokumentasi, jadi yang ditampilkan hanya persentase dari server.
-- Pengguna yang hanya memakai Claude Desktop (tanpa login Claude Code) tidak bisa dibaca usage-nya. Ini disengaja: Clotch tidak membongkar cookie Claude Desktop.
+- The usage endpoint is undocumented. If Anthropic changes it, the limits panel will be empty, but local tokens will still be shown.
+- Some keys in the server response are code names (e.g. `iguana_necktie`). These are shown as-is, without guessing their meaning.
+- The units of `monthly_limit` / `used_credits` in extra usage are undocumented, so only the server's percentage is shown.
+- Usage cannot be read for users who only use Claude Desktop (without a Claude Code login). This is intentional: Clotch does not extract Claude Desktop's cookies.
