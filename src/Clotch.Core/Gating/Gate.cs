@@ -36,23 +36,31 @@ public static class Gate
                     "Belum login Claude Code. Jalankan `claude` lalu /login.");
         }
 
-        if (string.IsNullOrWhiteSpace(state.SubscriptionType) ||
-            string.Equals(state.SubscriptionType, "free", StringComparison.OrdinalIgnoreCase))
-            return new(false, GateReason.NoPaidSubscription,
-                $"Tidak ada subscription Claude aktif (plan: {state.SubscriptionType ?? "tidak diketahui"}).");
+        if (string.Equals(state.SubscriptionType, "free", StringComparison.OrdinalIgnoreCase))
+            return new(false, GateReason.NoPaidSubscription, "Tidak ada subscription Claude aktif (plan: free).");
+
+        // Plan label missing (token minted without it): subscription usage windows from the API are proof enough.
+        if (string.IsNullOrWhiteSpace(state.SubscriptionType) && !HasSubscriptionUsage(state.LastGood))
+        {
+            return state.Status is MonitorStatus.Ok
+                ? new(false, GateReason.NoPaidSubscription, "Tidak ada subscription Claude aktif (plan: tidak diketahui).")
+                : new(false, GateReason.Checking, "Memeriksa subscription Claude…");
+        }
 
         if (state.Status == MonitorStatus.Unauthorized && state.LastGood is null)
             return new(false, GateReason.LoginInvalid, "Sesi Claude Code tidak valid. Login ulang di Claude Code.");
 
         return new(true, GateReason.Active, $"Claude {Format.Plan(state.SubscriptionType)} aktif.");
     }
+
+    private static bool HasSubscriptionUsage(UsageSnapshot? s) => s is not null && (s.FiveHour is not null || s.SevenDay is not null);
 }
 
 public static class Format
 {
     public static string Plan(string? subscriptionType) => subscriptionType?.ToLowerInvariant() switch
     {
-        null or "" => "?",
+        null or "" => "Subscription",
         "pro" => "Pro",
         "max" => "Max",
         "team" => "Team",

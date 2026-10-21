@@ -14,7 +14,7 @@ var noNetwork = args.Contains("--no-network");
 var time = TimeProvider.System;
 var env = DetectionEnvironment.Current();
 var detection = new DetectionService(env).Detect();
-var credsSource = new CredentialsReader(ClaudePaths.CredentialsFile(env.ConfigDir));
+var credsSource = new CredentialsReader(ClaudePaths.CredentialsFile(env.ConfigDir), ClaudePaths.AccountConfigFile());
 var creds = credsSource.Read();
 
 MonitorState state;

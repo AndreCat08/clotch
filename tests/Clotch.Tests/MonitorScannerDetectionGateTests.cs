@@ -323,6 +323,24 @@ public class GateTests
     public void Active_paid_plan_shows(MonitorStatus s, bool cached) =>
         Assert.Equal((true, GateReason.Active), Pair(Gate.Evaluate(Both, St(s, "max", cached))));
 
+    [Theory]
+    [InlineData(MonitorStatus.Ok)]
+    [InlineData(MonitorStatus.RateLimited)]
+    public void Unknown_plan_with_subscription_usage_shows(MonitorStatus s)
+    {
+        var g = Gate.Evaluate(Both, St(s, sub: null, cached: true));
+        Assert.Equal((true, GateReason.Active), Pair(g));
+        Assert.Equal("Claude Subscription aktif.", g.Message);
+    }
+
+    [Fact]
+    public void Unknown_plan_before_first_fetch_is_checking() =>
+        Assert.Equal((false, GateReason.Checking), Pair(Gate.Evaluate(Both, St(MonitorStatus.TokenExpired, sub: null))));
+
+    [Fact]
+    public void Free_plan_hides_even_with_usage_data() =>
+        Assert.Equal((false, GateReason.NoPaidSubscription), Pair(Gate.Evaluate(Both, St(MonitorStatus.Ok, "free", cached: true))));
+
     [Fact]
     public void Desktop_only_with_code_credentials_still_shows() =>
         Assert.True(Gate.Evaluate(DesktopOnly, St(MonitorStatus.Ok)).ShowNotch);
