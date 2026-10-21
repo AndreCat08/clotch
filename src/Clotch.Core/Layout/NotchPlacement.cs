@@ -1,7 +1,7 @@
 namespace Clotch.Core.Layout;
 
-/// <summary>Where the notch is attached. Top/Float use the horizontal bar, Left/Right the vertical strip.</summary>
-public enum NotchEdge { Top, Float, Left, Right }
+/// <summary>Where the notch is attached. Top/Bottom/Float use the horizontal bar, Left/Right the vertical strip.</summary>
+public enum NotchEdge { Top, Float, Left, Right, Bottom }
 
 /// <summary>Which way the details grow vertically from the compact header.</summary>
 public enum ExpandDirection { Down, Up }
@@ -44,16 +44,23 @@ public static class NotchPlacement
     /// <summary>Settings written before docking edges existed only hold (centerX, top): docked iff at the top of the work area.</summary>
     public static NotchEdge LegacyEdge(int top, PxRect work) => top <= work.Top ? NotchEdge.Top : NotchEdge.Float;
 
-    /// <summary>Decides the edge for a drop. Top wins at corners, so the existing top dock keeps working.</summary>
+    /// <summary>
+    /// Decides the edge for a drop. The cursor decides first (top, bottom, then the sides), so a strip slid along
+    /// a side edge stays a strip. A bar whose own top/bottom touches an edge also docks there.
+    /// </summary>
     /// <param name="cursor">Cursor position when the mouse was released.</param>
-    /// <param name="dropped">Window rectangle where the drag left it (may be partly off-screen).</param>
+    /// <param name="dropped">Compact rectangle where the drag left it (may be partly off-screen).</param>
     /// <param name="work">Work area of the monitor under the cursor.</param>
     /// <param name="snapPx">Distance from an edge that still counts as touching it.</param>
     public static NotchEdge ResolveEdge(PxPoint cursor, PxRect dropped, PxRect work, int snapPx)
     {
-        if (dropped.Top <= work.Top + snapPx || cursor.Y <= work.Top + snapPx) return NotchEdge.Top;
+        if (cursor.Y <= work.Top + snapPx) return NotchEdge.Top;
+        if (cursor.Y >= work.Bottom - 1 - snapPx) return NotchEdge.Bottom;
         if (cursor.X <= work.Left + snapPx) return NotchEdge.Left;
         if (cursor.X >= work.Right - 1 - snapPx) return NotchEdge.Right;
+        var isBar = dropped.Width > dropped.Height;
+        if (isBar && dropped.Top <= work.Top + snapPx) return NotchEdge.Top;
+        if (isBar && dropped.Bottom >= work.Bottom - snapPx) return NotchEdge.Bottom;
         return NotchEdge.Float;
     }
 
@@ -84,6 +91,7 @@ public static class NotchPlacement
         return anchor.Edge switch
         {
             NotchEdge.Top => new PxRect(ClampX(anchor.CenterX - size.Width / 2), work.Top, size.Width, size.Height),
+            NotchEdge.Bottom => new PxRect(ClampX(anchor.CenterX - size.Width / 2), Math.Max(work.Top, work.Bottom - size.Height), size.Width, size.Height),
             NotchEdge.Float => new PxRect(ClampX(anchor.CenterX - size.Width / 2), ClampY(anchor.Top), size.Width, size.Height),
             NotchEdge.Left => new PxRect(work.Left, ClampY(anchor.CenterY - size.Height / 2), size.Width, size.Height),
             NotchEdge.Right => new PxRect(Math.Max(work.Left, work.Right - size.Width), ClampY(anchor.CenterY - size.Height / 2), size.Width, size.Height),
@@ -110,7 +118,7 @@ public static class NotchPlacement
 
         ExpandDirection dir;
         int top;
-        if (edge == NotchEdge.Top || compact.Top + height <= work.Bottom)
+        if (edge == NotchEdge.Top || (edge != NotchEdge.Bottom && compact.Top + height <= work.Bottom))
         {
             dir = ExpandDirection.Down;
             top = compact.Top;
@@ -124,7 +132,7 @@ public static class NotchPlacement
         {
             var below = work.Bottom - compact.Top;
             var above = compact.Bottom - work.Top;
-            dir = below >= above ? ExpandDirection.Down : ExpandDirection.Up;
+            dir = edge == NotchEdge.Bottom || below < above ? ExpandDirection.Up : ExpandDirection.Down;
             top = dir == ExpandDirection.Down ? compact.Top : compact.Bottom - height;
         }
         top = Math.Clamp(top, work.Top, work.Bottom - height);

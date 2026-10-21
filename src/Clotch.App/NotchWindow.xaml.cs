@@ -187,12 +187,18 @@ public partial class NotchWindow : Window
         Root.MinWidth = vertical ? 0 : 300;
 
         // Shadow room is left on every side except the one touching the screen edge.
+        Shadow.Direction = edge == NotchEdge.Bottom ? 90 : 270;
         switch (edge)
         {
             case NotchEdge.Top:
                 Root.Margin = new Thickness(10, 0, 10, 12);
                 Root.CornerRadius = new CornerRadius(0, 0, 16, 16);
                 Root.BorderThickness = new Thickness(1, 0, 1, 1);
+                break;
+            case NotchEdge.Bottom:
+                Root.Margin = new Thickness(10, 12, 10, 0);
+                Root.CornerRadius = new CornerRadius(16, 16, 0, 0);
+                Root.BorderThickness = new Thickness(1, 1, 1, 0);
                 break;
             case NotchEdge.Float:
                 Root.Margin = new Thickness(10, 0, 10, 12);

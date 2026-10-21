@@ -112,10 +112,39 @@ public class NotchPlacementTests
     [InlineData(1915, 10, 0, NotchEdge.Top)]      // top-right corner: top wins
     [InlineData(900, 500, 470, NotchEdge.Float)]
     [InlineData(900, 30, 10, NotchEdge.Top)]      // window within snap distance of the top
+    [InlineData(900, 1010, 960, NotchEdge.Bottom)] // cursor at the bottom of the work area
+    [InlineData(900, 990, 965, NotchEdge.Bottom)]  // bar bottom touches the work-area bottom
+    [InlineData(5, 1015, 960, NotchEdge.Bottom)]   // bottom-left corner: bottom wins
     public void Resolves_edge_from_drop(int cx, int cy, int windowTop, NotchEdge expected)
     {
         var dropped = new PxRect(cx - 200, windowTop, 400, 56);
         Assert.Equal(expected, NotchPlacement.ResolveEdge(new PxPoint(cx, cy), dropped, Work, 30));
+    }
+
+    [Fact]
+    public void Strip_slid_to_a_corner_of_its_side_stays_a_strip()
+    {
+        var nearTop = new PxRect(1840, 0, 80, 300);
+        Assert.Equal(NotchEdge.Right, NotchPlacement.ResolveEdge(new PxPoint(1915, 150), nearTop, Work, 30));
+        var nearBottom = new PxRect(0, 720, 80, 300);
+        Assert.Equal(NotchEdge.Left, NotchPlacement.ResolveEdge(new PxPoint(5, 870), nearBottom, Work, 30));
+    }
+
+    [Fact]
+    public void Bottom_dock_is_flush_with_work_area_bottom_and_expands_up()
+    {
+        var compact = NotchPlacement.Compact(new NotchAnchor(NotchEdge.Bottom, 960, 0, 0), Bar, Work);
+        Assert.Equal(new PxRect(730, Work.Bottom - Bar.Height, 460, 56), compact);
+
+        var l = NotchPlacement.Expanded(NotchEdge.Bottom, compact, BarExpanded, Work);
+        Assert.Equal(ExpandDirection.Up, l.Direction);
+        Assert.Equal(Work.Bottom, l.Window.Bottom);
+        Assert.Equal(compact, NotchPlacement.CompactWithin(NotchEdge.Bottom, l.Direction, l.Window, Bar));
+
+        // Taller than the work area: still opens upward, clamped.
+        var tall = NotchPlacement.Expanded(NotchEdge.Bottom, compact, new PxSize(470, 1500), Work);
+        Assert.Equal(ExpandDirection.Up, tall.Direction);
+        Assert.Equal(Work.Top, tall.Window.Top);
     }
 
     [Fact]

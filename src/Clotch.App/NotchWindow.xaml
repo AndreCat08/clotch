@@ -89,7 +89,7 @@
             Padding="14,7,10,8"
             MinWidth="300">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="14" ShadowDepth="2" Direction="270" Opacity="0.45" />
+            <DropShadowEffect x:Name="Shadow" BlurRadius="14" ShadowDepth="2" Direction="270" Opacity="0.45" />
         </Border.Effect>
 
         <DockPanel x:Name="Layout">
