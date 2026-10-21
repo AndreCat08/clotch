@@ -64,6 +64,10 @@ internal static partial class NativeMethods
     [LibraryImport("user32.dll")]
     public static partial IntPtr MonitorFromPoint(POINT pt, uint flags);
 
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool GetCursorPos(out POINT pt);
+
     [LibraryImport("user32.dll", EntryPoint = "GetMonitorInfoW")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO info);

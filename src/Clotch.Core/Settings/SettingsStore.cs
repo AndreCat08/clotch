@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Clotch.Core.Diagnostics;
+using Clotch.Core.Layout;
 
 namespace Clotch.Core.Settings;
 
@@ -11,6 +12,13 @@ public sealed class AppSettings
 
     /// <summary>Notch top edge in physical screen pixels.</summary>
     public int? NotchTop { get; set; }
+
+    /// <summary>Docked edge; null in settings written before side docking existed (derived from NotchTop then).</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<NotchEdge>))]
+    public NotchEdge? NotchEdge { get; set; }
+
+    /// <summary>Vertical centre of the side-docked strip in physical screen pixels.</summary>
+    public int? NotchCenterY { get; set; }
 
     public bool NotchHidden { get; set; }
     public int PollMinutes { get; set; } = 5;

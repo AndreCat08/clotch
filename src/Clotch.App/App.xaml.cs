@@ -89,15 +89,18 @@ public partial class App : Application
                  $"desktop={_detection.ClaudeDesktop.Installed} ({_detection.ClaudeDesktop.Kind} {_detection.ClaudeDesktop.Version})");
 
         _vm = new NotchViewModel();
-        _notch = new NotchWindow(_vm, _settings.NotchCenterX, _settings.NotchTop);
+        _notch = new NotchWindow(_vm, _settings.NotchEdge, _settings.NotchCenterX, _settings.NotchTop, _settings.NotchCenterY);
         _notch.HideRequested += () => SetHidden(true);
         _notch.RefreshRequested += Refresh;
         _notch.OpenUsageRequested += OpenUsagePage;
-        _notch.Moved += (x, y) =>
+        _notch.Moved += anchor =>
         {
-            _settings.NotchCenterX = x;
-            _settings.NotchTop = y;
+            _settings.NotchEdge = anchor.Edge;
+            _settings.NotchCenterX = anchor.CenterX;
+            _settings.NotchTop = anchor.Top;
+            _settings.NotchCenterY = anchor.CenterY;
             _store.Save(_settings);
+            Log.Info($"notch moved: edge={anchor.Edge}");
         };
 
         _tray = new TrayIcon();
