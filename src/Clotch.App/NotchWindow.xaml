@@ -89,12 +89,12 @@
             Padding="14,7,10,8"
             MinWidth="300">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="14" ShadowDepth="2" Direction="270" Opacity="0.45" />
+            <DropShadowEffect x:Name="Shadow" BlurRadius="14" ShadowDepth="2" Direction="270" Opacity="0.45" />
         </Border.Effect>
 
-        <StackPanel>
-            <!-- Compact row: always visible. Click toggles details, drag moves. -->
-            <Grid x:Name="Header" Background="Transparent" Cursor="Hand" ToolTip="Klik untuk detail, drag untuk memindahkan">
+        <DockPanel x:Name="Layout">
+            <!-- Compact row (top dock / floating): always visible. Click toggles details, drag moves. -->
+            <Grid x:Name="Header" DockPanel.Dock="Top" Background="Transparent" Cursor="Hand" ToolTip="Klik untuk detail, drag untuk memindahkan">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
@@ -125,10 +125,42 @@
                         ToolTip="Sembunyikan notch (tampilkan lagi dari icon tray)" Click="Hide_Click" Margin="6,0,0,0" />
             </Grid>
 
+            <!-- Compact strip (docked to the left/right screen edge). -->
+            <StackPanel x:Name="HeaderV" DockPanel.Dock="Left" Visibility="Collapsed" Width="40" VerticalAlignment="Top"
+                        Background="Transparent" Cursor="Hand" ToolTip="Klik untuk detail, drag untuk memindahkan">
+                <Ellipse Width="7" Height="7" Fill="{Binding StatusBrush}" HorizontalAlignment="Center" Margin="0,2,0,10" />
+
+                <TextBlock Text="5j" Style="{StaticResource Muted}" HorizontalAlignment="Center" />
+                <ProgressBar Style="{StaticResource Bar}" Width="46" Value="{Binding SessionValue, Mode=OneWay}"
+                             Foreground="{Binding SessionBrush}" HorizontalAlignment="Center" Margin="0,5,0,5">
+                    <ProgressBar.LayoutTransform>
+                        <RotateTransform Angle="-90" />
+                    </ProgressBar.LayoutTransform>
+                </ProgressBar>
+                <TextBlock Text="{Binding SessionPercent}" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,12" />
+
+                <TextBlock Text="Mgg" Style="{StaticResource Muted}" HorizontalAlignment="Center" />
+                <ProgressBar Style="{StaticResource Bar}" Width="46" Value="{Binding WeeklyValue, Mode=OneWay}"
+                             Foreground="{Binding WeeklyBrush}" HorizontalAlignment="Center" Margin="0,5,0,5">
+                    <ProgressBar.LayoutTransform>
+                        <RotateTransform Angle="-90" />
+                    </ProgressBar.LayoutTransform>
+                </ProgressBar>
+                <TextBlock Text="{Binding WeeklyPercent}" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,12" />
+
+                <TextBlock Text="{Binding SessionReset}" Style="{StaticResource Muted}" FontSize="10"
+                           TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,8" />
+
+                <Button Style="{StaticResource IconButton}" Content="✕" FontSize="10" HorizontalAlignment="Center"
+                        ToolTip="Sembunyikan notch (tampilkan lagi dari icon tray)" Click="Hide_Click" />
+            </StackPanel>
+
+            <!-- Expanded details: open below/above the compact row, or beside the strip. Scrolls when taller than the screen. -->
+            <ScrollViewer x:Name="DetailsScroll" Focusable="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                          Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
             <!-- Expanded details -->
-            <StackPanel x:Name="Details" Width="330" HorizontalAlignment="Left" Margin="0,4,0,0"
-                        Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
-                <Rectangle Height="1" Fill="#1FFFFFFF" Margin="0,6,4,8" />
+            <StackPanel x:Name="Details" Width="330" HorizontalAlignment="Left" Margin="0,4,0,0">
+                <Rectangle x:Name="SeparatorTop" Height="1" Fill="#1FFFFFFF" Margin="0,6,4,8" />
 
                 <Grid>
                     <StackPanel>
@@ -207,7 +239,9 @@
                     <Button Style="{StaticResource Chip}" Content="Sembunyikan" Click="Hide_Click" />
                 </StackPanel>
                 <TextBlock x:Name="Toast" Style="{StaticResource Muted}" Margin="0,4,0,0" />
+                <Rectangle x:Name="SeparatorBottom" Height="1" Fill="#1FFFFFFF" Margin="0,8,4,6" Visibility="Collapsed" />
             </StackPanel>
-        </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
     </Border>
 </Window>
