@@ -174,6 +174,61 @@ public class CredentialsTests
         Assert.Null(new CredentialsReader(p).Read());
     }
 
+    // Shape written by a token refresh / third-party OAuth client: no subscriptionType, no rateLimitTier.
+    private const string BareCredentials =
+        """{"claudeAiOauth":{"accessToken":"sk-ant-TESTTOKEN","refreshToken":"sk-ant-R","expiresAt":4102444800000,"scopes":["user:file_upload","user:inference"]}}""";
+
+    private const string AccountConfig =
+        """{"numStartups":3,"oauthAccount":{"billingType":"google_play_subscription","organizationType":"claude_pro","organizationRateLimitTier":"default_claude_ai","userRateLimitTier":null}}""";
+
+    [Fact]
+    public void Missing_plan_falls_back_to_claude_json_account()
+    {
+        using var d = new TempDir();
+        var p = d.Write(".credentials.json", BareCredentials);
+        var a = d.Write(".claude.json", AccountConfig);
+        var c = new CredentialsReader(p, a).Read();
+
+        Assert.NotNull(c);
+        Assert.Equal("pro", c!.SubscriptionType);
+        Assert.Equal("default_claude_ai", c.RateLimitTier);
+        Assert.True(c.HasPaidSubscription);
+    }
+
+    [Fact]
+    public void Credentials_plan_wins_over_account_config()
+    {
+        using var d = new TempDir();
+        var p = d.Write(".credentials.json", Fixtures.CredentialsJson(subscription: "max"));
+        var a = d.Write(".claude.json", AccountConfig);
+        Assert.Equal("max", new CredentialsReader(p, a).Read()!.SubscriptionType);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("not json")]
+    [InlineData("{}")]
+    [InlineData("{\"oauthAccount\":null}")]
+    public void Unusable_account_config_keeps_credentials(string? content)
+    {
+        using var d = new TempDir();
+        var p = d.Write(".credentials.json", BareCredentials);
+        var a = d.Combine(".claude.json");
+        if (content is not null) File.WriteAllText(a, content);
+        var c = new CredentialsReader(p, a).Read();
+        Assert.NotNull(c);
+        Assert.Null(c!.SubscriptionType);
+    }
+
+    [Theory]
+    [InlineData("claude_pro", "pro")]
+    [InlineData("claude_max", "max")]
+    [InlineData("CLAUDE_TEAM", "team")]
+    [InlineData("enterprise", "enterprise")]
+    [InlineData("", null)]
+    public void Organization_type_is_normalized(string input, string? expected) =>
+        Assert.Equal(expected, CredentialsReader.NormalizePlan(input));
+
     [Fact]
     public void Free_plan_is_not_paid()
     {

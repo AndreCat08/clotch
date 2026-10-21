@@ -35,11 +35,67 @@ public interface ICredentialsSource
 /// Clotch never writes this file and never refreshes the token: Claude Code owns the token lifecycle,
 /// and rotating the refresh token from here could log the user out of Claude Code.
 /// </summary>
-public sealed class CredentialsReader(string credentialsPath) : ICredentialsSource
+public sealed class CredentialsReader(string credentialsPath, string? accountConfigPath = null) : ICredentialsSource
 {
     public string Path { get; } = credentialsPath;
 
+    /// <summary>Claude Code's global config (~/.claude.json). Its oauthAccount block is the plan fallback.</summary>
+    public string? AccountConfigPath { get; } = accountConfigPath;
+
     public OAuthCredentials? Read()
+    {
+        var creds = ReadCredentialsFile();
+        if (creds is null || AccountConfigPath is null) return creds;
+        if (!string.IsNullOrWhiteSpace(creds.SubscriptionType) && !string.IsNullOrWhiteSpace(creds.RateLimitTier))
+            return creds;
+
+        // Tokens minted by a refresh or by another OAuth client (setup-token, third-party agents) are written
+        // without subscriptionType/rateLimitTier. Claude Code still caches the plan in ~/.claude.json.
+        var account = ReadAccountPlan(AccountConfigPath);
+        if (account is null) return creds;
+        return creds with
+        {
+            SubscriptionType = string.IsNullOrWhiteSpace(creds.SubscriptionType) ? account.Value.Plan : creds.SubscriptionType,
+            RateLimitTier = string.IsNullOrWhiteSpace(creds.RateLimitTier) ? account.Value.Tier : creds.RateLimitTier,
+        };
+    }
+
+    internal static (string? Plan, string? Tier)? ReadAccountPlan(string path)
+    {
+        try
+        {
+            if (!File.Exists(path)) return null;
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var doc = JsonDocument.Parse(fs);
+            return ParseAccountPlan(doc.RootElement);
+        }
+        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    internal static (string? Plan, string? Tier)? ParseAccountPlan(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object ||
+            !root.TryGetProperty("oauthAccount", out var a) ||
+            a.ValueKind != JsonValueKind.Object)
+            return null;
+
+        var plan = NormalizePlan(Str(a, "organizationType"));
+        var tier = Str(a, "userRateLimitTier") is { Length: > 0 } u ? u : Str(a, "organizationRateLimitTier");
+        return plan is null && tier is null ? null : (plan, tier);
+    }
+
+    /// <summary>"claude_pro" -> "pro", "claude_max" -> "max"; anything else is lower-cased as-is.</summary>
+    internal static string? NormalizePlan(string? organizationType)
+    {
+        if (string.IsNullOrWhiteSpace(organizationType)) return null;
+        var s = organizationType.Trim().ToLowerInvariant();
+        return s.StartsWith("claude_", StringComparison.Ordinal) ? s[7..] : s;
+    }
+
+    private OAuthCredentials? ReadCredentialsFile()
     {
         for (var attempt = 0; attempt < 3; attempt++)
         {

@@ -141,7 +141,7 @@ public partial class App : Application
 
         _http = UsageClient.CreateHttpClient();
         _monitor = new UsageMonitor(
-            new CredentialsReader(ClaudePaths.CredentialsFile(env.ConfigDir)),
+            new CredentialsReader(ClaudePaths.CredentialsFile(env.ConfigDir), ClaudePaths.AccountConfigFile()),
             new UsageClient(_http, TimeProvider.System),
             TimeProvider.System,
             new MonitorOptions { PollInterval = TimeSpan.FromMinutes(_settings.PollMinutes) });

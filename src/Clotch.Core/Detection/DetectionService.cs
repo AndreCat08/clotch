@@ -61,6 +61,15 @@ public static class ClaudePaths
     }
 
     public static string CredentialsFile(string configDir) => Path.Combine(configDir, ".credentials.json");
+
+    /// <summary>Claude Code's global config: CLAUDE_CONFIG_DIR\.claude.json, else %USERPROFILE%\.claude.json.</summary>
+    public static string AccountConfigFile()
+    {
+        var env = Environment.GetEnvironmentVariable("CLAUDE_CONFIG_DIR");
+        return !string.IsNullOrWhiteSpace(env)
+            ? Path.Combine(env, ".claude.json")
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".claude.json");
+    }
     public static string ProjectsDir(string configDir) => Path.Combine(configDir, "projects");
 }
 
