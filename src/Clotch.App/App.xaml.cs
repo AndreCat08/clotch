@@ -88,7 +88,7 @@ public partial class App : Application
         Log.Info($"detected: code={_detection.ClaudeCode.Installed} ({_detection.ClaudeCode.Version}), " +
                  $"desktop={_detection.ClaudeDesktop.Installed} ({_detection.ClaudeDesktop.Kind} {_detection.ClaudeDesktop.Version})");
 
-        _vm = new NotchViewModel();
+        _vm = new NotchViewModel { GaugeStyle = _settings.CompactGaugeStyle };
         _notch = new NotchWindow(_vm, _settings.NotchEdge, _settings.NotchCenterX, _settings.NotchTop, _settings.NotchCenterY);
         _notch.HideRequested += () => SetHidden(true);
         _notch.RefreshRequested += Refresh;
@@ -104,7 +104,7 @@ public partial class App : Application
         };
 
         _tray = new TrayIcon();
-        _tray.SetOptions(SafeAutoStartEnabled(), _settings.AutoHideFullscreen, _settings.PollMinutes);
+        _tray.SetOptions(SafeAutoStartEnabled(), _settings.AutoHideFullscreen, _settings.PollMinutes, _settings.CompactGaugeStyle);
         _tray.ToggleNotchClicked += () => SetHidden(!_settings.NotchHidden);
         _tray.IconClicked += OnTrayIconClicked;
         _tray.RefreshClicked += () =>
@@ -133,7 +133,15 @@ public partial class App : Application
             _settings.PollMinutes = m;
             _store.Save(_settings);
             _monitor.UpdateOptions(_monitor.Options with { PollInterval = TimeSpan.FromMinutes(m) });
-            _tray.SetOptions(SafeAutoStartEnabled(), _settings.AutoHideFullscreen, m);
+            _tray.SetOptions(SafeAutoStartEnabled(), _settings.AutoHideFullscreen, m, _settings.CompactGaugeStyle);
+        };
+        _tray.GaugeStyleChanged += style =>
+        {
+            _settings.CompactGaugeStyle = style;
+            _store.Save(_settings);
+            _vm.GaugeStyle = style;
+            _tray.SetOptions(SafeAutoStartEnabled(), _settings.AutoHideFullscreen, _settings.PollMinutes, style);
+            Log.Info($"gauge style: {style}");
         };
         _tray.OpenLogsClicked += () =>
         {

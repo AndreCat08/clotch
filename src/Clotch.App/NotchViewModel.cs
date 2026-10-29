@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows.Media;
 using Clotch.Core.Gating;
+using Clotch.Core.Gauges;
 using Clotch.Core.Local;
 using Clotch.Core.Usage;
 
@@ -27,6 +28,7 @@ public sealed class NotchViewModel : INotifyPropertyChanged
     private MonitorState _state = MonitorState.Initial;
     private LocalUsageSummary? _local;
     private bool _isExpanded;
+    private CompactGaugeStyle _gaugeStyle = CompactGaugeStyle.Bar;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -39,6 +41,22 @@ public sealed class NotchViewModel : INotifyPropertyChanged
     public Brush WeeklyBrush { get; private set; } = Grey;
     public string SessionReset { get; private set; } = "";
     public Brush StatusBrush { get; private set; } = Grey;
+
+    /// <summary>How the compact gauges are drawn; switching it re-renders the compact row immediately.</summary>
+    public CompactGaugeStyle GaugeStyle
+    {
+        get => _gaugeStyle;
+        set
+        {
+            if (_gaugeStyle == value) return;
+            _gaugeStyle = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GaugeStyle)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowBar)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowRing)));
+        }
+    }
+    public bool ShowBar => _gaugeStyle == CompactGaugeStyle.Bar;
+    public bool ShowRing => _gaugeStyle == CompactGaugeStyle.Ring;
 
     // ── expanded ──────────────────────────────────────────────
     public bool IsExpanded

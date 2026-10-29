@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Reflection;
+using Clotch.Core.Gauges;
 using WinForms = System.Windows.Forms;
 
 namespace Clotch.App;
@@ -14,6 +15,7 @@ internal sealed class TrayIcon : IDisposable
     private readonly WinForms.ToolStripMenuItem _autoStart;
     private readonly WinForms.ToolStripMenuItem _autoHide;
     private readonly WinForms.ToolStripMenuItem _interval;
+    private readonly WinForms.ToolStripMenuItem _gaugeStyle;
     private bool _suppress;
 
     public event Action? ToggleNotchClicked;
@@ -23,6 +25,7 @@ internal sealed class TrayIcon : IDisposable
     public event Action<bool>? AutoStartChanged;
     public event Action<bool>? AutoHideChanged;
     public event Action<int>? IntervalChanged;
+    public event Action<CompactGaugeStyle>? GaugeStyleChanged;
     public event Action? OpenLogsClicked;
     public event Action? ExitClicked;
     public event Action? IconClicked;
@@ -44,6 +47,19 @@ internal sealed class TrayIcon : IDisposable
             _interval.DropDownItems.Add(item);
         }
 
+        _gaugeStyle = new WinForms.ToolStripMenuItem("Gaya indikator");
+        foreach (var (style, label) in new[]
+                 {
+                     (CompactGaugeStyle.Bar, "Progress bar"),
+                     (CompactGaugeStyle.Ring, "Lingkaran"),
+                     (CompactGaugeStyle.Percent, "Persentase saja"),
+                 })
+        {
+            var item = new WinForms.ToolStripMenuItem(label) { Tag = style };
+            item.Click += (_, _) => GaugeStyleChanged?.Invoke(style);
+            _gaugeStyle.DropDownItems.Add(item);
+        }
+
         var menu = new WinForms.ContextMenuStrip();
         menu.Items.AddRange([
             _status,
@@ -53,6 +69,7 @@ internal sealed class TrayIcon : IDisposable
             new WinForms.ToolStripMenuItem("Buka halaman usage claude.ai", null, (_, _) => OpenUsageClicked?.Invoke()),
             new WinForms.ToolStripMenuItem("Kembalikan posisi notch", null, (_, _) => ResetPositionClicked?.Invoke()),
             new WinForms.ToolStripSeparator(),
+            _gaugeStyle,
             _interval,
             _autoHide,
             _autoStart,
@@ -89,7 +106,7 @@ internal sealed class TrayIcon : IDisposable
         _toggleNotch.Text = notchHidden ? "Tampilkan notch" : "Sembunyikan notch";
     }
 
-    public void SetOptions(bool autoStart, bool autoHide, int intervalMinutes)
+    public void SetOptions(bool autoStart, bool autoHide, int intervalMinutes, CompactGaugeStyle gaugeStyle)
     {
         _suppress = true;
         try
@@ -98,6 +115,8 @@ internal sealed class TrayIcon : IDisposable
             _autoHide.Checked = autoHide;
             foreach (WinForms.ToolStripMenuItem item in _interval.DropDownItems)
                 item.Checked = item.Tag is int m && m == intervalMinutes;
+            foreach (WinForms.ToolStripMenuItem item in _gaugeStyle.DropDownItems)
+                item.Checked = item.Tag is CompactGaugeStyle g && g == gaugeStyle;
         }
         finally
         {
