@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Clotch.Core.Diagnostics;
+using Clotch.Core.Gauges;
 using Clotch.Core.Layout;
 
 namespace Clotch.Core.Settings;
@@ -23,6 +24,27 @@ public sealed class AppSettings
     public bool NotchHidden { get; set; }
     public int PollMinutes { get; set; } = 5;
     public bool AutoHideFullscreen { get; set; } = true;
+
+    /// <summary>Collapsed-notch gauge look. Unknown values fall back to Bar without discarding other settings.</summary>
+    [JsonConverter(typeof(TolerantGaugeStyleConverter))]
+    public CompactGaugeStyle CompactGaugeStyle { get; set; } = CompactGaugeStyle.Bar;
+}
+
+/// <summary>Reads the gauge style by name (case-insensitive); anything unrecognised becomes <see cref="CompactGaugeStyle.Bar"/>.</summary>
+public sealed class TolerantGaugeStyleConverter : JsonConverter<CompactGaugeStyle>
+{
+    public override CompactGaugeStyle Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.String &&
+            Enum.TryParse<CompactGaugeStyle>(reader.GetString(), ignoreCase: true, out var style) &&
+            Enum.IsDefined(style) && !int.TryParse(reader.GetString(), out _))
+            return style;
+        reader.Skip();
+        return CompactGaugeStyle.Bar;
+    }
+
+    public override void Write(Utf8JsonWriter writer, CompactGaugeStyle value, JsonSerializerOptions options) =>
+        writer.WriteStringValue(value.ToString());
 }
 
 [JsonSerializable(typeof(AppSettings))]

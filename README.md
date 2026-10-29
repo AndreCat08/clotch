@@ -29,14 +29,15 @@ Only one instance runs at a time. If `Clotch.exe` is launched again, the running
 
 | Action | Result |
 |---|---|
-| Click the notch row | Expand / collapse details. Near the bottom of the screen the details open **upward**, so the notch row stays where you put it |
+| Click the notch row | Expand / collapse details with a short animation (instant when Windows animation effects are turned off). Near the bottom of the screen the details open **upward**, so the notch row stays where you put it |
 | Drag the notch | Move it. The position is clamped to the screen and saved |
 | Drop the notch at the top edge | Docks it to the top (flat top, rounded bottom corners) |
 | Drop the notch at the bottom edge | Docks it right above the taskbar (rounded top corners, flat bottom). Its details always open upward |
 | Drop the notch at the left or right edge | Docks it to that side as a **vertical strip** (status, 5-hour and weekly bars, reset countdown, ✕). Its details open toward the screen centre. Drag it away from the edge to get the horizontal bar back |
 | ✕ on the notch / "Sembunyikan" (Hide) | Hides the notch. This state is saved |
 | Left-click the tray icon | Show / hide the notch. If the notch is unavailable, an explanation is shown |
-| Right-click the tray icon | Menu: refresh, open the claude.ai usage page, reset position, refresh interval (2–30 minutes), hide while fullscreen, run at Windows startup, log folder, exit |
+| Right-click the tray icon | Menu: refresh, open the claude.ai usage page, reset position, indicator style, refresh interval (2–30 minutes), hide while fullscreen, run at Windows startup, log folder, exit |
+| Tray menu → "Gaya indikator" (Indicator style) | How the collapsed notch shows the 5-hour and weekly usage: "Progress bar", "Lingkaran" (ring) or "Persentase saja" (percentage only). Applies immediately and is saved |
 
 The details panel contains:
 

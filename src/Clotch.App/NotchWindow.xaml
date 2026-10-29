@@ -108,15 +108,23 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
                     <TextBlock Text="5j" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
                     <ProgressBar Style="{StaticResource Bar}" Width="46" Value="{Binding SessionValue, Mode=OneWay}"
-                                 Foreground="{Binding SessionBrush}" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding SessionPercent}" FontWeight="SemiBold" Margin="6,0,0,0" MinWidth="30" VerticalAlignment="Center" />
+                                 Foreground="{Binding SessionBrush}" VerticalAlignment="Center" Margin="0,0,6,0"
+                                 Visibility="{Binding ShowBar, Converter={StaticResource BoolToVis}}" />
+                    <local:RingGauge Width="16" Height="16" Value="{Binding SessionValue, Mode=OneWay}" Stroke="{Binding SessionBrush}"
+                                     VerticalAlignment="Center" Margin="0,0,6,0"
+                                     Visibility="{Binding ShowRing, Converter={StaticResource BoolToVis}}" />
+                    <TextBlock Text="{Binding SessionPercent}" FontWeight="SemiBold" MinWidth="30" VerticalAlignment="Center" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
                     <TextBlock Text="Mgg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
                     <ProgressBar Style="{StaticResource Bar}" Width="46" Value="{Binding WeeklyValue, Mode=OneWay}"
-                                 Foreground="{Binding WeeklyBrush}" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding WeeklyPercent}" FontWeight="SemiBold" Margin="6,0,0,0" MinWidth="30" VerticalAlignment="Center" />
+                                 Foreground="{Binding WeeklyBrush}" VerticalAlignment="Center" Margin="0,0,6,0"
+                                 Visibility="{Binding ShowBar, Converter={StaticResource BoolToVis}}" />
+                    <local:RingGauge Width="16" Height="16" Value="{Binding WeeklyValue, Mode=OneWay}" Stroke="{Binding WeeklyBrush}"
+                                     VerticalAlignment="Center" Margin="0,0,6,0"
+                                     Visibility="{Binding ShowRing, Converter={StaticResource BoolToVis}}" />
+                    <TextBlock Text="{Binding WeeklyPercent}" FontWeight="SemiBold" MinWidth="30" VerticalAlignment="Center" />
                 </StackPanel>
 
                 <TextBlock Grid.Column="3" Text="{Binding SessionReset}" Style="{StaticResource Muted}" VerticalAlignment="Center" />
@@ -132,21 +140,29 @@
 
                 <TextBlock Text="5j" Style="{StaticResource Muted}" HorizontalAlignment="Center" />
                 <ProgressBar Style="{StaticResource Bar}" Width="46" Value="{Binding SessionValue, Mode=OneWay}"
-                             Foreground="{Binding SessionBrush}" HorizontalAlignment="Center" Margin="0,5,0,5">
+                             Foreground="{Binding SessionBrush}" HorizontalAlignment="Center" Margin="0,5,0,5"
+                             Visibility="{Binding ShowBar, Converter={StaticResource BoolToVis}}">
                     <ProgressBar.LayoutTransform>
                         <RotateTransform Angle="-90" />
                     </ProgressBar.LayoutTransform>
                 </ProgressBar>
-                <TextBlock Text="{Binding SessionPercent}" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,12" />
+                <local:RingGauge Width="22" Height="22" Value="{Binding SessionValue, Mode=OneWay}" Stroke="{Binding SessionBrush}"
+                                 HorizontalAlignment="Center" Margin="0,5,0,4"
+                                 Visibility="{Binding ShowRing, Converter={StaticResource BoolToVis}}" />
+                <TextBlock Text="{Binding SessionPercent}" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,2,0,12" />
 
                 <TextBlock Text="Mgg" Style="{StaticResource Muted}" HorizontalAlignment="Center" />
                 <ProgressBar Style="{StaticResource Bar}" Width="46" Value="{Binding WeeklyValue, Mode=OneWay}"
-                             Foreground="{Binding WeeklyBrush}" HorizontalAlignment="Center" Margin="0,5,0,5">
+                             Foreground="{Binding WeeklyBrush}" HorizontalAlignment="Center" Margin="0,5,0,5"
+                             Visibility="{Binding ShowBar, Converter={StaticResource BoolToVis}}">
                     <ProgressBar.LayoutTransform>
                         <RotateTransform Angle="-90" />
                     </ProgressBar.LayoutTransform>
                 </ProgressBar>
-                <TextBlock Text="{Binding WeeklyPercent}" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,12" />
+                <local:RingGauge Width="22" Height="22" Value="{Binding WeeklyValue, Mode=OneWay}" Stroke="{Binding WeeklyBrush}"
+                                 HorizontalAlignment="Center" Margin="0,5,0,4"
+                                 Visibility="{Binding ShowRing, Converter={StaticResource BoolToVis}}" />
+                <TextBlock Text="{Binding WeeklyPercent}" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,2,0,12" />
 
                 <TextBlock Text="{Binding SessionReset}" Style="{StaticResource Muted}" FontSize="10"
                            TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,8" />
@@ -155,11 +171,15 @@
                         ToolTip="Sembunyikan notch (tampilkan lagi dari icon tray)" Click="Hide_Click" />
             </StackPanel>
 
-            <!-- Expanded details: open below/above the compact row, or beside the strip. Scrolls when taller than the screen. -->
-            <ScrollViewer x:Name="DetailsScroll" Focusable="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                          Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
+            <!-- Expanded details: open below/above the compact row, or beside the strip. Scrolls when taller than the screen.
+                 DetailsHost clips the details while the expand/collapse animation grows or shrinks the notch. -->
+            <Border x:Name="DetailsHost" ClipToBounds="True" Visibility="Collapsed">
+            <ScrollViewer x:Name="DetailsScroll" Focusable="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <!-- Expanded details -->
             <StackPanel x:Name="Details" Width="330" HorizontalAlignment="Left" Margin="0,4,0,0">
+                <StackPanel.RenderTransform>
+                    <TranslateTransform x:Name="DetailsShift" />
+                </StackPanel.RenderTransform>
                 <Rectangle x:Name="SeparatorTop" Height="1" Fill="#1FFFFFFF" Margin="0,6,4,8" />
 
                 <Grid>
@@ -242,6 +262,7 @@
                 <Rectangle x:Name="SeparatorBottom" Height="1" Fill="#1FFFFFFF" Margin="0,8,4,6" Visibility="Collapsed" />
             </StackPanel>
             </ScrollViewer>
+            </Border>
         </DockPanel>
     </Border>
 </Window>
